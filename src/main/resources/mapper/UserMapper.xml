@@ -5,8 +5,8 @@
 <!-- namespace：映射器的命名空间，通常对应接口的全限定名 -->
 <mapper namespace="com.mdservice.mapper.userMapper.UserMapper">
     <insert id="registerAccount">
-        insert into user (account, password, gender, username, role)
-        value (#{account}, #{password}, #{gender}, #{username}, #{role})
+        insert into user (account, password, gender, username, role, is_show, create_time, updateTime)
+        value (#{account}, #{password}, #{gender}, #{username}, #{role}, #{isShow}, #{createTime},#{updateTime})
     </insert>
     <!-- 查询语句 -->
     <select id="queryAccount" resultType="Long">
@@ -16,7 +16,7 @@
         </where>
     </select>
     <select id="queryUser" resultType="com.mdservice.entity.User">
-        select id, account, gender, role, username, password
+        select id, account, gender, role, username, password,is_show,create_time,update_time
         from user
         where account = #{account}
     </select>

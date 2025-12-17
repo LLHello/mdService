@@ -17,4 +17,6 @@ public class ResultConstant {
     public static final Short ROLE_ERROR_CODE = 1005;
 
     public static final String ROLE_ERROR_MSG = "角色不正确";
+    public static final Short ACCOUNT_BAN_CODE = 1006;
+    public static final String ACCOUNT_BAN_MSG = "账号封禁，请联系管理员申述";
 }

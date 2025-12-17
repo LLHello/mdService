@@ -26,6 +26,8 @@ public class UserServiceImpl implements UserService {
         // TODO 使用redis分布式锁，避免高并发下，创建相同账号；并且使用缓存避免一段时间内，相同账号注册全打入mysql
         // TODO 注销时需要检查锁和缓存是否存在，避免mysql中没有账户，却无法创建的情况
         //创建账号
+        //默认启用
+        user.setIsShow((byte) 1);
         userMapper.registerAccount(user);
         return Result.success();
     }
@@ -44,6 +46,9 @@ public class UserServiceImpl implements UserService {
         if(!user.getRole().equals(role)){
             log.error("角色不正确！");
             return Result.error(ResultConstant.ROLE_ERROR_CODE, ResultConstant.ROLE_ERROR_MSG);
+        }
+        if(user.getIsShow() == 0){
+            return Result.error(ResultConstant.ACCOUNT_BAN_CODE, ResultConstant.ACCOUNT_BAN_MSG);
         }
         //隐藏密码
         user.setPassword("");
