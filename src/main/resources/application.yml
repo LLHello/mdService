@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: mdService
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/md_service
+    username: root
+    password: 1234
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:mapper/**/*.xml

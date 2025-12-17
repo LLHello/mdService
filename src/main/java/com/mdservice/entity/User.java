@@ -1,0 +1,17 @@
+package com.mdservice.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+    private Long id;
+    private String account;
+    private String password;
+    private Byte gender;//0，女；1，男
+    private String username;
+    private Byte role;//0,普通用户；1，商家；2，管理员
+}
