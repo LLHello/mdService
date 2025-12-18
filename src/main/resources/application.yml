@@ -6,8 +6,22 @@ spring:
     url: jdbc:mysql://localhost:3306/md_service
     username: root
     password: 1234
+  servlet:
+    multipart:
+      max-request-size: 2MB
+      max-file-size: 10MB
 
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
   mapper-locations: classpath:mapper/**/*.xml
+
+# 自定义文件上传配置
+file:
+  upload:
+    # 开发环境：源码目录（保证持久化）
+    dev-path: src/main/resources/upload
+    # 生产环境：服务器独立目录（需提前创建，如 /opt/upload）
+    prod-path: /opt/upload
+    # 访问前缀（用于前端访问）
+    access-prefix: /upload/

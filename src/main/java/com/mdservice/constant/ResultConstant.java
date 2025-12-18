@@ -19,4 +19,12 @@ public class ResultConstant {
     public static final String ROLE_ERROR_MSG = "角色不正确";
     public static final Short ACCOUNT_BAN_CODE = 1006;
     public static final String ACCOUNT_BAN_MSG = "账号封禁，请联系管理员申述";
+    public static final Short ID_OR_PIC_ISNULL_CODE = 1007;
+
+    public static final String ID_OR_PIC_ISNULL_MSG = "id或者照片不能为空";
+
+    public static final Short ID_NOT_NULL_CODE = 1008;
+    public static final String ID_NOT_NULL_MSG = "id不能为空";
+    public static final Short OLD_PWD_ERROR_CODE = 1009;
+    public static final String OLD_PWD_ERROR_MSG = "旧密码错误";
 }

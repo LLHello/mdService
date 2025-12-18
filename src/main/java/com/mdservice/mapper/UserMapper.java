@@ -1,4 +1,4 @@
-package com.mdservice.mapper.userMapper;
+package com.mdservice.mapper;
 
 import com.mdservice.entity.User;
 import org.apache.ibatis.annotations.Mapper;
@@ -13,7 +13,7 @@ public interface UserMapper {
 
     User queryId(Integer id);
 
-    void updateIcon(User user);
+    Long updateIcon(User user);
 
     void updateUser(User user);
 

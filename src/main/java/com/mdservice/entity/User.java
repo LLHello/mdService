@@ -19,4 +19,6 @@ public class User {
     private Byte isShow;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private String icon;
+    private String des;
 }

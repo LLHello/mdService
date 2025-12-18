@@ -3,21 +3,52 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!-- namespace：映射器的命名空间，通常对应接口的全限定名 -->
-<mapper namespace="com.mdservice.mapper.userMapper.UserMapper">
+<mapper namespace="com.mdservice.mapper.UserMapper">
+<!--    注册账户-->
     <insert id="registerAccount">
-        insert into user (account, password, gender, username, role, is_show, create_time, updateTime)
-        value (#{account}, #{password}, #{gender}, #{username}, #{role}, #{isShow}, #{createTime},#{updateTime})
+        insert into user (account, password, gender, username, role, is_show, create_time, updateTime,des)
+        value (#{account}, #{password}, #{gender}, #{username}, #{role}, #{isShow}, #{createTime},#{updateTime},#{des})
     </insert>
-    <!-- 查询语句 -->
+<!--    更新用户头像-->
+    <update id="updateIcon">
+        update user
+        set icon = #{icon}
+        where id = #{id}
+    </update>
+    <update id="updateUser">
+        update user
+        <set>
+            gender = #{gender}, username = #{username}, update_time = #{updateTime}, des = #{des}
+        </set>
+        where id = #{id}
+    </update>
+    <update id="updatePWD">
+        update user
+        <set>
+            password = #{newPWD}
+        </set>
+        where id = #{id}
+    </update>
+    <!-- 查询账户数量 -->
     <select id="queryAccount" resultType="Long">
         SELECT count(*) from user
         <where>
             account = #{account}
         </where>
     </select>
+<!--    根据账号查询用户-->
     <select id="queryUser" resultType="com.mdservice.entity.User">
-        select id, account, gender, role, username, password,is_show,create_time,update_time
+        select id, account, gender, role, username, password,is_show,create_time,update_time,icon,des
         from user
         where account = #{account}
     </select>
+    <select id="queryId" resultType="com.mdservice.entity.User">
+        select * from user
+        where id = #{id}
+    </select>
+    <select id="queryById" resultType="com.mdservice.entity.User">
+        select * from user
+        where id = #{id}
+    </select>
+
 </mapper>
