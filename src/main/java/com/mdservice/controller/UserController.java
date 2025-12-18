@@ -6,8 +6,10 @@ import com.mdservice.entity.User;
 import com.mdservice.service.inter.UserService;
 import com.mdservice.utils.Result;
 import jakarta.annotation.Resource;
+import jakarta.servlet.annotation.MultipartConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @Slf4j
@@ -24,14 +26,16 @@ public class UserController {
 
     @GetMapping("/login")
     public Result login(String account,String pwd, Byte role){
-        if("".equals(account) || "".equals(pwd) || ObjectUtil.isNull(role)){
-            return Result.error(ResultConstant.ACCOUNT_PWD_OR_ROLE_ISNULL_CODE,ResultConstant.ACCOUNT_PWD_OR_ROLE_ISNULL_MSG);
-        }
         return userService.login(account,pwd, role);
     }
     @PutMapping("/out")
     public Result loginOut(){
         // TODO 退出登录
         return null;
+    }
+    @PostMapping("upload")
+    public Result upload(Integer id, MultipartFile pic){
+
+        return userService.upload(id, pic);
     }
 }
