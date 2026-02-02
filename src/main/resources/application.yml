@@ -1,27 +1,44 @@
+
 spring:
   application:
-    name: mdService
-  datasource:
+    name: mdService # 项目名称
+  datasource: # mysql配置
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/md_service
     username: root
-    password: 1234
-  servlet:
+    #password: yourpassword
+    password: lj15284193547?
+  servlet: # 上传文件大小配置
     multipart:
-      max-request-size: 2MB
-      max-file-size: 10MB
+      max-request-size: 10MB
+      max-file-size: 100MB
+  data:
+    redis: # redis配置
+      database: 0
+      host: localhost
+      port: 6379 # redis端口
+      # password: yourpassword #有密码设置密码
 
-mybatis:
+mybatis: # mybatis配置
   configuration:
-    map-underscore-to-camel-case: true
-  mapper-locations: classpath:mapper/**/*.xml
+    map-underscore-to-camel-case: true #开启驼峰命名
+  mapper-locations: classpath:mapper/**/*.xml # mybatis的映射sql文件目录
 
-# 自定义文件上传配置
-file:
+
+file: # 自定义文件上传配置
   upload:
-    # 开发环境：源码目录（保证持久化）
-    dev-path: src/main/resources/upload
-    # 生产环境：服务器独立目录（需提前创建，如 /opt/upload）
-    prod-path: /opt/upload
-    # 访问前缀（用于前端访问）
-    access-prefix: /upload/
+    dev-path: src/main/resources/upload # 开发环境：源码目录（保证持久化）
+    prod-path: /opt/upload # 生产环境：服务器独立目录（需提前创建，如 /opt/upload）
+    access-prefix: /upload/ # 访问前缀（用于前端访问）
+
+
+server:
+  port: 8080 # 项目启动端口
+
+logging: # 日志配置
+  level: # 日志级别
+    com.mdservice: debug
+  pattern: # 输出格式
+    dateformat: HH:mm:ss:SSS
+  file: # 输出路径
+    path: "logs/${spring.application.name}"

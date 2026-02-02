@@ -5,6 +5,7 @@ import com.mdservice.constant.ResultConstant;
 import com.mdservice.entity.User;
 import com.mdservice.service.inter.UserService;
 import com.mdservice.utils.Result;
+import com.mdservice.utils.UserLocal;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,7 @@ public class UserController {
 //    修改个人信息
     @PutMapping("/modifyUser")
     public Result modify(@RequestBody User user){
+        log.info("userId: {}", UserLocal.getUser());
         //根据id进行修改，id必须传
         return userService.modify(user);
     }
@@ -50,5 +52,9 @@ public class UserController {
     public Result modifyPWD(Long id, String oldPWD, String newPWD, String newPWD2){
         // TODO 密码加密后对比
         return userService.modifyPWD(id, oldPWD, newPWD, newPWD2);
+    }
+    @GetMapping("/{id}")
+    public Result getUserById(@PathVariable Long id){
+        return userService.getUserById(id);
     }
 }

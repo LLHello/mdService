@@ -1,15 +1,16 @@
-package com.mdservice.entity;
+package com.mdservice.domain.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Goods {
+public class GoodsVO {
     private Long id;
     private Long merchantId;//商家id
     private Long categoryId;//分类id

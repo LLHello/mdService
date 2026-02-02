@@ -3,5 +3,39 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mdservice.mapper.GoodsMapper">
+    <update id="update">
+        update goods
+        set category_id = #{categoryId}, title = #{title}, price = #{price}, is_show = #{isShow}, update_time = #{updateTime}, status = #{status}, des = #{des}
+        where id = #{id}
+    </update>
+    <update id="updatePicStr">
+        update goods
+        set pic = #{picStr}
+        where id = #{id}
+    </update>
 
+    <select id="getCategoryList" resultType="com.mdservice.entity.Category">
+        select * from category
+    </select>
+    <select id="getCategoryGoods" resultType="com.mdservice.entity.Goods">
+        select *
+        from goods
+        <where>
+            category_id = #{id}
+        </where>
+    </select>
+    <select id="getMerchantGoods" resultType="com.mdservice.entity.Goods">
+        select *
+        from goods
+        <where>
+            merchant_id = #{id}
+        </where>
+    </select>
+    <select id="getGood" resultType="com.mdservice.entity.Goods">
+        select *
+        from goods
+        <where>
+            id = #{id}
+        </where>
+    </select>
 </mapper>

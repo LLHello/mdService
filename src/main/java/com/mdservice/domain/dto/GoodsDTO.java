@@ -1,19 +1,20 @@
-package com.mdservice.entity;
+package com.mdservice.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-
+import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Goods {
+public class GoodsDTO {
     private Long id;
     private Long merchantId;//商家id
     private Long categoryId;//分类id
-    private String pic;//商品图片
+//    private List<MultipartFile> pic;//商品图片
     private String title;//商品名称
     private String price;//商品价格
     private Byte isShow;//是否展示：商家管理

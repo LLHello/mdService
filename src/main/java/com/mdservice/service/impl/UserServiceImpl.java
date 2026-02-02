@@ -1,14 +1,17 @@
 package com.mdservice.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.mdservice.domain.vo.UserVO;
 import com.mdservice.constant.ResultConstant;
 import com.mdservice.entity.User;
 import com.mdservice.mapper.UserMapper;
 import com.mdservice.service.inter.UserService;
 import com.mdservice.utils.FileUploadUtil;
+import com.mdservice.utils.JwtUtil;
 import com.mdservice.utils.Result;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +25,8 @@ public class UserServiceImpl implements UserService {
     private FileUploadUtil fileUploadUtil;
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private JwtUtil jwtUtil;
 
     /*
     * 注册方法
@@ -79,7 +84,12 @@ public class UserServiceImpl implements UserService {
         //隐藏密码
         user.setPassword("");
         log.info("user: {}", user);
-        return Result.success(user);
+        UserVO userVo = new UserVO();
+        BeanUtils.copyProperties(user, userVo, UserVO.class);
+        String token = jwtUtil.generateToken(user.getId().toString(), user.getUsername());
+        userVo.setToken(token);
+        log.info("userVo: {}", userVo);
+        return Result.success(userVo);
     }
 //上传用户头像
     @Override
@@ -120,10 +130,16 @@ public class UserServiceImpl implements UserService {
         user.setUpdateTime(LocalDateTime.now());
         //更新数据，注意有些不能更新
         userMapper.updateUser(user);
-        //查询更新后的数据，做处理后返回
-        user = userMapper.queryById(user.getId());
-        user.setPassword("");
-        return Result.success(user);
+//        //查询更新后的数据，做处理后返回
+//        user = userMapper.queryById(user.getId());
+//        user.setPassword("");
+//        UserVO userVo = new UserVO();
+//        BeanUtils.copyProperties(user, userVo, UserVO.class);
+//        // 修改信息后，重新下发和设置token
+//        String token = jwtUtil.generateToken(userVo.getId().toString(), userVo.getUsername());
+//        log.info("token: {}", token);
+//        userVo.setToken(token);
+        return Result.success("更新成功！");
     }
 /*
 * 修改密码
@@ -142,5 +158,18 @@ public class UserServiceImpl implements UserService {
         }
         userMapper.updatePWD(id, newPWD);
         return Result.success("更改成功，请重新登录");
+    }
+
+    @Override
+    public Result getUserById(Long id) {
+        User user = userMapper.queryById(id);
+        user.setPassword("");
+        UserVO userVo = new UserVO();
+        BeanUtils.copyProperties(user, userVo, UserVO.class);
+        // 修改信息后，重新下发和设置token
+        String token = jwtUtil.generateToken(userVo.getId().toString(), userVo.getUsername());
+        log.info("token: {}", token);
+        userVo.setToken(token);
+        return Result.success(userVo);
     }
 }

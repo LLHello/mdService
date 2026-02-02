@@ -3,6 +3,8 @@ package com.mdservice.constant;
 public class ResultConstant {
     public static final Short ERROR_DEFAULT_CODE = 500;
     public static final String ERROR_DEFAULT_MSG = "操作失败";
+    public static final Short UNAUTHORIZED_CODE = 401;
+    public static final String UNAUTHORIZED_MSG = "未登录或Token过期";
     public static final Short SUCCESS_CODE = 200;
     public static final String SUCCESS_DEFAULT_MSG = "操作成功";
     public static final Short ACCOUNT_EXISTS_CODE = 1001;
