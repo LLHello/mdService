@@ -1,25 +1,38 @@
 package com.mdservice.service.impl;
 
+import com.mdservice.constant.RedisConstant;
 import com.mdservice.domain.dto.GoodsDTO;
+import com.mdservice.domain.vo.GoodsVO;
 import com.mdservice.entity.Category;
 import com.mdservice.entity.Goods;
 import com.mdservice.entity.GoodsImage;
 import com.mdservice.mapper.GoodsMapper;
 import com.mdservice.service.inter.GoodsService;
+import com.mdservice.task.ClickSyncTask;
 import com.mdservice.utils.FileUploadUtil;
 import com.mdservice.utils.Result;
+import com.mdservice.utils.UserLocal;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+
+import static com.mdservice.constant.RedisConstant.DIRTY_KEY;
 
 
 @Service
@@ -29,14 +42,16 @@ public class GoodsServiceImpl implements GoodsService {
     private GoodsMapper goodsMapper;
     @Autowired
     private FileUploadUtil fileUploadUtil;
-
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+    //获取所有分类
     @Override
     public Result getCategoryList() {
         List<Category> categoryList =goodsMapper.getCategoryList();
         ArrayList<Category> collect = categoryList.stream().filter(item -> item.getIsShow() == 1).collect(Collectors.toCollection(ArrayList::new));
         return Result.success(collect);
     }
-
+    //获取分类下的商品
     @Override
     public Result getCategoryGoods(Long id) {
         List<Goods> goods = goodsMapper.getCategoryGoods(id);
@@ -45,13 +60,14 @@ public class GoodsServiceImpl implements GoodsService {
         ArrayList<Goods> collectGoods = goods.stream().filter(item -> item.getIsShow() == 1 && item.getStatus() == 1).collect(Collectors.toCollection(ArrayList::new));
         return Result.success(collectGoods);
     }
-
+    //获取商品详情信息
     @Override
     public Result getMerchantGoods(Long id) {
+
         List<Goods> goods = goodsMapper.getMerchantGoods(id);
         return Result.success(goods);
     }
-
+    //
     @Override
     public Result updatePics(GoodsDTO goods, List<String> deleteImagePaths, List<MultipartFile> newImages, String oldImagePath) {
         log.info("goods: {}, deleteImagePaths: {}, newImages: {}", goods, deleteImagePaths, newImages);
@@ -115,11 +131,80 @@ public class GoodsServiceImpl implements GoodsService {
         return Result.success();
     }
 
+    @Autowired
+    @Qualifier("clickSyncExecutor")
+    private Executor executor;
+    @Autowired
+    private ClickSyncTask clickSyncTask;
     @Override
-    public Result getGood(Long id) {
-        Goods good = goodsMapper.getGood(id);
+    public Result getGood(Long goodsId) {
+        String userId = UserLocal.getUser();
+        log.info("userId: {},goodsId: {}", userId, goodsId);
+        //查看该用户是否点击过
+        Boolean member = redisTemplate.opsForSet().isMember(RedisConstant.CLICK_USER_KEY+Long.parseLong(userId), String.valueOf(goodsId));
+        if(!member){
+            //加入集合，防止重复点击计数
+            //goods:click:userId
+            redisTemplate.opsForSet().add(RedisConstant.CLICK_USER_KEY+Long.parseLong(userId), String.valueOf(goodsId));
+            //将当前商品点击数+1
+            redisTemplate.opsForZSet().incrementScore(RedisConstant.RANK_KEY, String.valueOf(goodsId), 1);
+            //将变化的放入集合，方便定时更新
+            redisTemplate.opsForSet().add(DIRTY_KEY, String.valueOf(goodsId));
+            // 如果脏数据积压超过 10 条，立即触发一次异步同步
+            Long size = redisTemplate.opsForSet().size(DIRTY_KEY);
+            if (size != null && size > 10) {
+                clickSyncTask.syncToDb();
+            }
+        }
+
+        Goods good = goodsMapper.getGood(goodsId);
         log.info("good: {}", good);
         return Result.success(good);
+    }
+    //top15商品
+    @Override
+    public Result getTop10() {
+        Set<String> top10 = redisTemplate.opsForZSet().reverseRange(RedisConstant.RANK_KEY, 0, 9);
+        List<GoodsVO> Top10Goods = goodsMapper.getGoods(top10);
+        return Result.success(Top10Goods);
+    }
+    //获取商品点击量
+    @Override
+    public Result getGoodsClickCount(Long goodId) {
+        Double score = redisTemplate.opsForZSet().score(RedisConstant.RANK_KEY, String.valueOf(goodId));
+        return Result.success(score);
+    }
+
+
+    public Result addGood(GoodsDTO goodsDTO, List<MultipartFile> images) {
+        StringBuilder sb = new StringBuilder();
+        //上传图片,并记录路径
+        for(int i = 0 ; i < images.size() ; i++) {
+            MultipartFile file = images.get(i);
+            try {
+                String s = fileUploadUtil.uploadFile(file);
+                sb.append(s);
+                if(i != images.size() - 1) {
+                    sb.append(",");
+                }
+            } catch (IOException e) {
+                log.error("上传商品图片失败：{}", e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+        String picStr = sb.toString();
+        //拷贝，然后更新数据库
+        Goods goods = new Goods();
+        BeanUtils.copyProperties(goodsDTO, goods);
+        goods.setPic(picStr);
+        goods.setUpdateTime(LocalDateTime.now());
+        goods.setCreateTime(LocalDateTime.now());
+        goods.setClickTimes(0L);
+        boolean b = goodsMapper.addGood(goods);
+        if (!b) {
+            return Result.error("添加商品失败！");
+        }
+        return Result.success();
     }
 
 }

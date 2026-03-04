@@ -21,4 +21,5 @@ public class Goods {
     private LocalDateTime updateTime;
     private Byte status;//管理员管理商品
     private String des;//对商品的描述
+    private Long clickTimes;//商品点击次数
 }

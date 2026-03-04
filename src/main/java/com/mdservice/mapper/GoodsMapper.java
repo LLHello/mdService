@@ -1,12 +1,16 @@
 package com.mdservice.mapper;
 
 import com.mdservice.domain.dto.GoodsDTO;
+import com.mdservice.domain.vo.GoodsVO;
 import com.mdservice.entity.Category;
 import com.mdservice.entity.Goods;
 import com.mdservice.entity.GoodsImage;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Mapper
 public interface GoodsMapper {
@@ -22,4 +26,10 @@ public interface GoodsMapper {
     Goods getGood(Long id);
 
     void updatePicStr(Long id, String picStr);
+
+    List<GoodsVO> getGoods(Set<String> top10);
+
+    void updateClickCount(@Param("params") Map<Long, Long> map);
+
+    boolean addGood(Goods goods);
 }

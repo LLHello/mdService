@@ -19,21 +19,24 @@ import java.util.List;
 public class GoodsController {
     @Resource
     private GoodsService goodsService;
-/*
-* 获取商品分类列表
-* */
+    /*
+    * 获取商品分类列表
+    * */
     @GetMapping("/categoryList")
     public Result categoryList(){
         return goodsService.getCategoryList();
     }
+    //查看商品分类下的商品
     @GetMapping("/categoryId/{id}")
     public Result categoryId(@PathVariable Long id){
         return goodsService.getCategoryGoods(id);
     }
+    //当前商家下的商品
     @GetMapping("/merchantGoods/{id}")
     public Result merchantGoods(@PathVariable Long id){
         return goodsService.getMerchantGoods(id);
     }
+    //更新商品信息（商家）
     @PutMapping("/update")
     public Result update(@Validated @RequestPart("goods") GoodsDTO goods,//商品字段信息
                          @RequestPart(value = "deleteImagePaths", required = false) List<String> deleteImagePaths,//要删除的图片路径，格式：/upload/demo.png
@@ -50,8 +53,24 @@ public class GoodsController {
         if(!CollectionUtils.isEmpty(newImages) && newImages.size()+num > 5) return Result.error("最多上传五张图片");
         return goodsService.updatePics(goods, deleteImagePaths, newImages, oldImagePath);
     }
+    //查看商品详情
     @GetMapping("/good/{id}")
     public Result getGood(@PathVariable Long id){
         return goodsService.getGood(id);
+    }
+    //获取前15热门商品
+    @GetMapping("/top15")
+    public Result top10(){
+        return goodsService.getTop10();
+    }
+    //获取商品点击量
+    @GetMapping("/clickCount")
+    public Result clickCount(Long goodId){
+        return goodsService.getGoodsClickCount(goodId);
+    }
+    //商家添加商品
+    @PostMapping("/add")
+    public Result addGood(@RequestPart("goodsDTO") GoodsDTO goodsDTO, @RequestPart("images") List<MultipartFile> images){
+        return goodsService.addGood(goodsDTO, images);
     }
 }

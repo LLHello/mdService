@@ -5,6 +5,8 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -15,11 +17,17 @@ import java.util.Map;
 @Component
 public class JwtUtil {
     //定义密钥，长度需要超过 32 个字符，才符合 HS256 标准
-    // TODO 将密钥放在配置文件中
-    private static final String SECRET_STRING = "MySuperSecretKeyThatIsAtLeast32BytesLongForSecurity";
-    private static final Key KEY = Keys.hmacShaKeyFor(SECRET_STRING.getBytes());
-    //过期时间10天
-    private static final long EXPIRATION_TIME = 864000000;
+    @Value("${jwt.secret}")
+    private String SECRET_STRING;
+
+    @Value("${jwt.expiration}")
+    private long EXPIRATION_TIME;
+    private  Key key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes());
+    }
     /**
      * 下发 Token (生成)
      * @param userId 用户ID
@@ -36,7 +44,7 @@ public class JwtUtil {
                 .setSubject(username) // 主题
                 .setIssuedAt(new Date()) // 签发时间
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // 过期时间
-                .signWith(KEY, SignatureAlgorithm.HS256) // 签名算法和密钥
+                .signWith(key, SignatureAlgorithm.HS256) // 签名算法和密钥
                 .compact();
     }
     /**
@@ -47,7 +55,7 @@ public class JwtUtil {
     public Claims parseToken(String token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(KEY)
+                    .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();

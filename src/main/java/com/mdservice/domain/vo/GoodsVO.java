@@ -22,4 +22,5 @@ public class GoodsVO {
     private LocalDateTime updateTime;
     private Byte status;//管理员管理商品
     private String des;//对商品的描述
+    private Long clickTimes;
 }

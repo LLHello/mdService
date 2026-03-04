@@ -18,4 +18,10 @@ public interface GoodsService {
     Result updatePics(GoodsDTO goods, List<String> deleteImagePaths, List<MultipartFile> newImages, String oldImagePath);
 
     Result getGood(Long id);
+
+    Result getTop10();
+
+    Result getGoodsClickCount(Long goodId);
+
+    Result addGood(GoodsDTO goodsDTO, List<MultipartFile> images);
 }

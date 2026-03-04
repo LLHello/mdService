@@ -4,10 +4,11 @@ spring:
     name: mdService # 项目名称
   datasource: # mysql配置
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/md_service
+    # &allowMultiQueries=true 允许批量执行sql语句
+    url: jdbc:mysql://localhost:3307/md_service?&allowMultiQueries=true
     username: root
     #password: yourpassword
-    password: lj15284193547?
+    password: root
   servlet: # 上传文件大小配置
     multipart:
       max-request-size: 10MB
@@ -24,11 +25,14 @@ mybatis: # mybatis配置
     map-underscore-to-camel-case: true #开启驼峰命名
   mapper-locations: classpath:mapper/**/*.xml # mybatis的映射sql文件目录
 
+jwt:
+  secret: "MySuperSecretKeyThatIsAtLeast32BytesLongForSecurity"
+  expiration: 864000000
 
 file: # 自定义文件上传配置
   upload:
-    dev-path: src/main/resources/upload # 开发环境：源码目录（保证持久化）
-    prod-path: /opt/upload # 生产环境：服务器独立目录（需提前创建，如 /opt/upload）
+    dev-path: src/main/resources/upload # 开发环境
+    prod-path: /opt/upload # 生产环境
     access-prefix: /upload/ # 访问前缀（用于前端访问）
 
 

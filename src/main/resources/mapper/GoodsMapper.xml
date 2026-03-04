@@ -3,6 +3,10 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mdservice.mapper.GoodsMapper">
+    <insert id="addGood">
+        insert into goods(merchant_id, category_id, pic, title, price, is_show, create_time, update_time, status, des, click_times)
+        value (#{merchantId}, #{categoryId}, #{pic}, #{title}, #{price}, #{isShow}, #{createTime}, #{updateTime}, #{status}, #{des}, #{clickTimes})
+    </insert>
     <update id="update">
         update goods
         set category_id = #{categoryId}, title = #{title}, price = #{price}, is_show = #{isShow}, update_time = #{updateTime}, status = #{status}, des = #{des}
@@ -12,6 +16,13 @@
         update goods
         set pic = #{picStr}
         where id = #{id}
+    </update>
+    <update id="updateClickCount">
+        <foreach collection="params" item="count" index="goodsId" separator=";">
+            update goods
+            set click_times = #{count}
+            where id = #{goodsId}
+        </foreach>
     </update>
 
     <select id="getCategoryList" resultType="com.mdservice.entity.Category">
@@ -38,4 +49,13 @@
             id = #{id}
         </where>
     </select>
+    <select id="getGoods" resultType="com.mdservice.domain.vo.GoodsVO">
+        select *
+        from goods
+        where id IN
+        <foreach collection="top10" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
 </mapper>
