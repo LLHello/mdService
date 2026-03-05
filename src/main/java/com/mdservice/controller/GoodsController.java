@@ -58,7 +58,7 @@ public class GoodsController {
     public Result getGood(@PathVariable Long id){
         return goodsService.getGood(id);
     }
-    //获取前15热门商品
+    //获取前10热门商品
     @GetMapping("/top15")
     public Result top10(){
         return goodsService.getTop10();
@@ -72,5 +72,15 @@ public class GoodsController {
     @PostMapping("/add")
     public Result addGood(@RequestPart("goodsDTO") GoodsDTO goodsDTO, @RequestPart("images") List<MultipartFile> images){
         return goodsService.addGood(goodsDTO, images);
+    }
+    //管理员管理商品展示
+    @PutMapping("/modifyStatus")
+    public Result modifyStatus(Long goodsId, Integer status){
+        return goodsService.modifyStatus(goodsId, status);
+    }
+    //管理员查看每个分类下的商品
+    @GetMapping("/categoryId/admin/{id}")
+    public Result categoryIdAdmin(@PathVariable Long id){
+        return goodsService.categoryIdAdmin(id);
     }
 }

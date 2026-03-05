@@ -24,6 +24,11 @@
             where id = #{goodsId}
         </foreach>
     </update>
+    <update id="modifyStatus">
+        update goods
+        set status = #{status}
+        where id = #{goodsId}
+    </update>
 
     <select id="getCategoryList" resultType="com.mdservice.entity.Category">
         select * from category
@@ -56,6 +61,11 @@
         <foreach collection="top10" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
+    </select>
+    <select id="categoryIdAdmin" resultType="com.mdservice.entity.Goods">
+        select *
+        from goods
+        where category_id = #{id}
     </select>
 
 </mapper>

@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -171,5 +172,20 @@ public class UserServiceImpl implements UserService {
         log.info("token: {}", token);
         userVo.setToken(token);
         return Result.success(userVo);
+    }
+
+    @Override
+    public Result getAll() {
+        List<UserVO> users = userMapper.getAll();
+        return Result.success(users);
+    }
+    //管理员修改用户是否封禁，0封禁，1启用
+    @Override
+    public Result modifyShow(Byte isShow, Long userId) {
+        Boolean b = userMapper.modifyShow(isShow, userId);
+        if(!b){
+            return Result.error();
+        }
+        return Result.success();
     }
 }

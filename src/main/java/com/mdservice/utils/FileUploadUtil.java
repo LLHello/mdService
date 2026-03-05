@@ -50,10 +50,10 @@ public class FileUploadUtil {
             throw new IllegalArgumentException("上传文件不能为空");
         }
 
-        // 1. 生成唯一文件名（避免重复）
+        // 1. 生成唯一文件名
         String originalFilename = file.getOriginalFilename();
         String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
-        String fileName = UUID.randomUUID().toString() + suffix;
+        String fileName = UUID.randomUUID() + suffix;
 
 
         // 3. 确定最终存储路径
@@ -73,7 +73,7 @@ public class FileUploadUtil {
         // 5. 复制文件（MultipartFile -> 本地文件）
         file.transferTo(targetFile.toPath());
 
-        // 6. 开发环境：同步复制到target/classes/upload（编译目录）
+//        // 6. 开发环境：同步复制到target/classes/upload（编译目录）
         if ("dev".equals(activeProfile)) {
             copyToTargetClasses(uploadDir, fileName);
         }
@@ -112,7 +112,7 @@ public class FileUploadUtil {
             throw new IOException("获取classpath路径失败", e);
         }
 
-        // 目标目录：target/classes/upload/2025/12/18
+        // 目标目录：target/classes/upload/
         File targetDir = new File(targetClasspathUploadPath + File.separator);
         if (!targetDir.exists()) {
             targetDir.mkdirs();

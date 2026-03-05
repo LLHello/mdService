@@ -28,4 +28,5 @@ public class Result<T> {
     public static<T> Result<T> error(Short code, String msg){
         return new Result<>(code, msg, null);
     }
+
 }

@@ -29,6 +29,11 @@
         </set>
         where id = #{id}
     </update>
+    <update id="modifyShow">
+        update user
+        set is_show = #{isShow}
+        where id = #{userId}
+    </update>
     <!-- 查询账户数量 -->
     <select id="queryAccount" resultType="Long">
         SELECT count(*) from user
@@ -49,6 +54,10 @@
     <select id="queryById" resultType="com.mdservice.entity.User">
         select * from user
         where id = #{id}
+    </select>
+    <select id="getAll" resultType="com.mdservice.domain.vo.UserVO">
+        select *
+        from user
     </select>
 
 </mapper>

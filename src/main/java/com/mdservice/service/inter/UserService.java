@@ -16,4 +16,8 @@ public interface UserService {
     Result modifyPWD(Long id, String oldPWD, String newPWD, String newPWD2);
 
     Result getUserById(Long id);
+
+    Result getAll();
+
+    Result modifyShow(Byte isShow, Long userId);
 }

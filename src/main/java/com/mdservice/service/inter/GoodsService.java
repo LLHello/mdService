@@ -24,4 +24,9 @@ public interface GoodsService {
     Result getGoodsClickCount(Long goodId);
 
     Result addGood(GoodsDTO goodsDTO, List<MultipartFile> images);
+
+    Result modifyStatus(Long goodsId, Integer status);
+
+    Result categoryIdAdmin(Long id);
+
 }

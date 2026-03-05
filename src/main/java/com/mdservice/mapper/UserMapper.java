@@ -1,7 +1,10 @@
 package com.mdservice.mapper;
 
+import com.mdservice.domain.vo.UserVO;
 import com.mdservice.entity.User;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 @Mapper
 public interface UserMapper {
@@ -20,4 +23,8 @@ public interface UserMapper {
     User queryById(Long id);
 
     void updatePWD(Long id, String newPWD);
+
+    List<UserVO> getAll();
+
+    Boolean modifyShow(Byte isShow, Long userId);
 }

@@ -207,4 +207,19 @@ public class GoodsServiceImpl implements GoodsService {
         return Result.success();
     }
 
+    @Override
+    public Result modifyStatus(Long goodsId, Integer status) {
+        Boolean b = goodsMapper.modifyStatus(goodsId, status);
+        if (!b) {
+            return Result.error();
+        }
+        return Result.success();
+    }
+
+    @Override
+    public Result categoryIdAdmin(Long id) {
+        List<Goods> goodsList = goodsMapper.categoryIdAdmin(id);
+        return Result.success(goodsList);
+    }
+
 }

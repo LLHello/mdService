@@ -3,6 +3,7 @@ package com.mdservice.controller;
 import cn.hutool.core.util.ObjectUtil;
 import com.mdservice.constant.ResultConstant;
 import com.mdservice.entity.User;
+import com.mdservice.mapper.UserMapper;
 import com.mdservice.service.inter.UserService;
 import com.mdservice.utils.Result;
 import com.mdservice.utils.UserLocal;
@@ -56,5 +57,15 @@ public class UserController {
     @GetMapping("/{id}")
     public Result getUserById(@PathVariable Long id){
         return userService.getUserById(id);
+    }
+    //获取所有用户
+    @GetMapping("/getAll")
+    public Result getAllUsers(){
+        return userService.getAll();
+    }
+    //管理员修改用户是否封禁，0封禁，1启用
+    @PutMapping("/modifyShow")
+    public Result modifyShow(Byte isShow, Long userId){
+        return userService.modifyShow(isShow, userId);
     }
 }
