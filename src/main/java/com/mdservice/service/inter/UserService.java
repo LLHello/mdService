@@ -4,6 +4,8 @@ import com.mdservice.entity.User;
 import com.mdservice.utils.Result;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 public interface UserService {
     Result register(User user);
 

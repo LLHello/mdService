@@ -1,5 +1,6 @@
 package com.mdservice.controller;
 
+import com.mdservice.aop.Log;
 import com.mdservice.domain.dto.GoodsDTO;
 import com.mdservice.entity.Goods;
 import com.mdservice.service.inter.GoodsService;
@@ -37,6 +38,7 @@ public class GoodsController {
         return goodsService.getMerchantGoods(id);
     }
     //更新商品信息（商家）
+    @Log(module = "商品", operation = "修改商品", desc = "商家修改商品信息")
     @PutMapping("/update")
     public Result update(@Validated @RequestPart("goods") GoodsDTO goods,//商品字段信息
                          @RequestPart(value = "deleteImagePaths", required = false) List<String> deleteImagePaths,//要删除的图片路径，格式：/upload/demo.png
@@ -54,6 +56,7 @@ public class GoodsController {
         return goodsService.updatePics(goods, deleteImagePaths, newImages, oldImagePath);
     }
     //查看商品详情
+    @Log(module = "商品", operation = "查看商品", desc = "用户查看商品详情")
     @GetMapping("/good/{id}")
     public Result getGood(@PathVariable Long id){
         return goodsService.getGood(id);

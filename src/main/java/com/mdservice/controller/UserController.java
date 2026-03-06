@@ -3,14 +3,19 @@ package com.mdservice.controller;
 import cn.hutool.core.util.ObjectUtil;
 import com.mdservice.constant.ResultConstant;
 import com.mdservice.entity.User;
+import com.mdservice.mapper.FeedbackMapper;
 import com.mdservice.mapper.UserMapper;
+import com.mdservice.service.inter.FeedbackService;
 import com.mdservice.service.inter.UserService;
 import com.mdservice.utils.Result;
 import com.mdservice.utils.UserLocal;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 
 @Slf4j
@@ -19,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
     @Resource
     private UserService userService;
+    @Autowired
+    private FeedbackService feedbackService;
 //    注册
     @PostMapping("/register")
     public Result register(@RequestBody User user){

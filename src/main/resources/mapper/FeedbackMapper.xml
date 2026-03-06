@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.FeedbackMapper">
+
+    <insert id="push">
+        insert into feedback(content, user_id, create_time, pic, status, title)
+        value (#{content}, #{userId}, NOW(), #{pic}, #{status}, #{title})
+
+    </insert>
+    <insert id="replyFeedback">
+        insert into feedback_reply(content, feedback_id)
+        value (#{content}, #{feedbackId});
+        update feedback
+        set status = 1
+        where id = #{feedbackId}
+    </insert>
+    <update id="setStatus">
+        update feedback
+        set status = #{status}
+        where id = #{id}
+    </update>
+    <select id="pull" resultType="com.mdservice.entity.Feedback">
+        select *
+        from feedback
+    </select>
+    <select id="getFeeback" resultType="com.mdservice.entity.Feedback">
+        select *
+        from feedback
+        where user_id = #{userId}
+    </select>
+    <select id="getReply" resultType="com.mdservice.entity.FeedbackReply">
+        select *
+        from feedback_reply
+        where feedback_id = #{replyId}
+    </select>
+    <select id="checkReply" resultType="com.mdservice.entity.FeedbackReply">
+        select *
+        from feedback_reply
+        where feedback_id = #{feedbackId}
+    </select>
+</mapper>

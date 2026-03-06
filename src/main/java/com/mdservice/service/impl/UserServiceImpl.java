@@ -9,6 +9,7 @@ import com.mdservice.service.inter.UserService;
 import com.mdservice.utils.FileUploadUtil;
 import com.mdservice.utils.JwtUtil;
 import com.mdservice.utils.Result;
+import com.mdservice.websocket.WebSocketServer;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -58,7 +59,7 @@ public class UserServiceImpl implements UserService {
 * 登录方法
 * */
     @Override
-    public Result login(String account, String pwd, Byte role) {
+    public Result login(String account, String pwd, Byte role){
         if("".equals(account) || "".equals(pwd) || ObjectUtil.isNull(role)){
             return Result.error(ResultConstant.ACCOUNT_PWD_OR_ROLE_ISNULL_CODE,ResultConstant.ACCOUNT_PWD_OR_ROLE_ISNULL_MSG);
         }
