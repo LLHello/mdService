@@ -67,5 +67,10 @@
         from goods
         where category_id = #{id}
     </select>
+    <select id="findByName" resultType="com.mdservice.entity.Goods">
+        select *
+        from goods
+        where title like concat('%', #{name}, '%')
+    </select>
 
 </mapper>

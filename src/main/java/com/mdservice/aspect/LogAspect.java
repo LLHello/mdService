@@ -32,7 +32,7 @@ public class LogAspect {
     @Resource
     private SysLogService sysLogService;
 
-    /** 切入点：拦截所有加了@SysLog注解的方法 */
+    /** 切入点：拦截所有加了@Log注解的方法 */
     @Pointcut("@annotation(com.mdservice.aop.Log)")
     public void sysLogPointcut() {}
 

@@ -140,6 +140,10 @@ public class GoodsServiceImpl implements GoodsService {
     public Result getGood(Long goodsId) {
         String userId = UserLocal.getUser();
         log.info("userId: {},goodsId: {}", userId, goodsId);
+        if(userId == null){
+            return Result.error("用户id为null!");
+        }
+
         //查看该用户是否点击过
         Boolean member = redisTemplate.opsForSet().isMember(RedisConstant.CLICK_USER_KEY+Long.parseLong(userId), String.valueOf(goodsId));
         if(!member){
@@ -220,6 +224,11 @@ public class GoodsServiceImpl implements GoodsService {
     public Result categoryIdAdmin(Long id) {
         List<Goods> goodsList = goodsMapper.categoryIdAdmin(id);
         return Result.success(goodsList);
+    }
+
+    @Override
+    public List<Goods> findByName(String name) {
+        return goodsMapper.findByName(name);
     }
 
 }

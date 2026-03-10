@@ -28,5 +28,5 @@ public interface GoodsService {
     Result modifyStatus(Long goodsId, Integer status);
 
     Result categoryIdAdmin(Long id);
-
+    List<Goods> findByName(String name);
 }

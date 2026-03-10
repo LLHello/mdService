@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.UserFavoriteMapper">
+
+    <insert id="star">
+        insert into user_favorite(user_id, target_type, target_id, create_time)
+        value (#{userId}, #{targetType}, #{targetId}, #{createTime})
+    </insert>
+    <delete id="unStar">
+        delete from user_favorite
+        where id = #{id}
+    </delete>
+    <select id="getStar" resultType="com.mdservice.entity.UserFavorite">
+        select *
+        from user_favorite
+        where user_id = #{userId}
+    </select>
+    <select id="getFans" resultType="java.lang.Long">
+        select count(*)
+        from user_favorite
+        where target_id = #{merchantId} and target_type = '0'
+    </select>
+</mapper>

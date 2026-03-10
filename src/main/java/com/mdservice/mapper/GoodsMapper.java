@@ -5,6 +5,7 @@ import com.mdservice.domain.vo.GoodsVO;
 import com.mdservice.entity.Category;
 import com.mdservice.entity.Goods;
 import com.mdservice.entity.GoodsImage;
+import com.mdservice.utils.Result;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -36,4 +37,6 @@ public interface GoodsMapper {
     Boolean modifyStatus(Long goodsId, Integer status);
 
     List<Goods> categoryIdAdmin(Long id);
+
+    List<Goods> findByName(String name);
 }

@@ -6,8 +6,8 @@
 <mapper namespace="com.mdservice.mapper.UserMapper">
 <!--    注册账户-->
     <insert id="registerAccount">
-        insert into user (account, password, gender, username, role, is_show, create_time, updateTime,des)
-        value (#{account}, #{password}, #{gender}, #{username}, #{role}, #{isShow}, #{createTime},#{updateTime},#{des})
+        insert into user (account, password, gender, username, role, is_show, create_time,des)
+        value (#{account}, #{password}, #{gender}, #{username}, #{role}, #{isShow}, #{createTime},#{des})
     </insert>
 <!--    更新用户头像-->
     <update id="updateIcon">
