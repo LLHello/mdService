@@ -32,11 +32,13 @@ public interface GoodsMapper {
 
     void updateClickCount(@Param("params") Map<Long, Long> map);
 
-    boolean addGood(Goods goods);
+    Long addGood(Goods goods);
 
     Boolean modifyStatus(Long goodsId, Integer status);
 
     List<Goods> categoryIdAdmin(Long id);
 
     List<Goods> findByName(String name);
+
+    List<Goods> getAllGoods();
 }

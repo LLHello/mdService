@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Method;
 
@@ -44,6 +46,9 @@ public class LogAspect {
         Object resultObj = null;
         try {
             resultObj = joinPoint.proceed();
+            if (resultObj instanceof Flux || resultObj instanceof Mono) {
+                resultObj = "[响应式数据流(Flux/Mono)，不进行JSON序列化打印]";
+            }
             log.setResult("成功");
             return resultObj;
         } catch (Exception e) {

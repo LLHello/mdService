@@ -7,6 +7,7 @@ import com.mdservice.entity.Category;
 import com.mdservice.entity.Goods;
 import com.mdservice.entity.GoodsImage;
 import com.mdservice.mapper.GoodsMapper;
+import com.mdservice.service.KnowledgeBaseService;
 import com.mdservice.service.inter.GoodsService;
 import com.mdservice.task.ClickSyncTask;
 import com.mdservice.utils.FileUploadUtil;
@@ -44,6 +45,8 @@ public class GoodsServiceImpl implements GoodsService {
     private FileUploadUtil fileUploadUtil;
     @Autowired
     private StringRedisTemplate redisTemplate;
+    @Autowired
+    private KnowledgeBaseService knowledgeBaseService;
     //获取所有分类
     @Override
     public Result getCategoryList() {
@@ -204,10 +207,13 @@ public class GoodsServiceImpl implements GoodsService {
         goods.setUpdateTime(LocalDateTime.now());
         goods.setCreateTime(LocalDateTime.now());
         goods.setClickTimes(0L);
-        boolean b = goodsMapper.addGood(goods);
-        if (!b) {
+        Long b = goodsMapper.addGood(goods);
+        if (b == null) {
             return Result.error("添加商品失败！");
         }
+        log.info("商品主键：{}", goods.getId());
+        String s = goods.getId() + "," + goods.getTitle()+ "," + goods.getPrice() + "," + goods.getDes();
+        knowledgeBaseService.importKnowledge(s);
         return Result.success();
     }
 
