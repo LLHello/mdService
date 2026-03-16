@@ -4,6 +4,7 @@ import com.mdservice.domain.vo.UserVO;
 import com.mdservice.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper
@@ -27,4 +28,8 @@ public interface UserMapper {
     List<UserVO> getAll();
 
     Boolean modifyShow(Byte isShow, Long userId);
+
+    int deductMoney(Long userId, BigDecimal amount);
+
+    int addMoney(Long userId, BigDecimal amount);
 }

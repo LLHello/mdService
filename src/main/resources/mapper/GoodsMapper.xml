@@ -72,9 +72,154 @@
         from goods
         where title like concat('%', #{name}, '%')
     </select>
+    <select id="searchGoods" resultType="com.mdservice.entity.Goods">
+        select g.id,
+               g.merchant_id,
+               g.category_id,
+               g.pic,
+               g.title,
+               cast(t.min_price as char) as price,
+               g.is_show,
+               g.create_time,
+               g.update_time,
+               g.status,
+               g.des,
+               g.click_times
+        from (select s.goods_id as goods_id, min(s.price) as min_price
+              from sku s
+                       inner join goods g on g.id = s.goods_id
+              <where>
+                  g.is_show = 1
+                  and g.status = 1
+                  and s.status = 1
+                  <if test="keyword != null and keyword != ''">
+                      and g.title like concat('%', #{keyword}, '%')
+                  </if>
+                  <if test="minPrice != null">
+                      and s.price <![CDATA[>=]]> #{minPrice}
+                  </if>
+                  <if test="maxPrice != null">
+                      and s.price <![CDATA[<=]]> #{maxPrice}
+                  </if>
+                  <if test="skuAttrs != null and skuAttrs.size() > 0">
+                      <foreach collection="skuAttrs" item="attr" separator=" ">
+                          and JSON_CONTAINS(s.sku_attrs, cast(#{attr} as json))
+                      </foreach>
+                  </if>
+              </where>
+              group by s.goods_id) t
+                 inner join goods g on g.id = t.goods_id
+        <choose>
+            <when test="sort == 'priceAsc'">
+                order by t.min_price asc
+            </when>
+            <when test="sort == 'priceDesc'">
+                order by t.min_price desc
+            </when>
+            <otherwise>
+                order by g.update_time desc
+            </otherwise>
+        </choose>
+    </select>
     <select id="getAllGoods" resultType="com.mdservice.entity.Goods">
         select *
         from goods
+    </select>
+
+    <select id="selectSkusByGoodsId" resultType="com.mdservice.entity.Sku">
+        select sku_id,
+               goods_id,
+               price,
+               market_price,
+               cost_price,
+               stock,
+               lock_stock,
+               sku_attrs,
+               status,
+               sale_count,
+               created_at,
+               updated_at
+        from sku
+        where goods_id = #{goodsId}
+        order by sku_id asc
+    </select>
+
+    <insert id="insertSku" useGeneratedKeys="true" keyProperty="skuId">
+        insert into sku(goods_id, price, market_price, cost_price, stock, lock_stock, sku_attrs, status, sale_count)
+        values (#{goodsId},
+                #{price},
+                #{marketPrice},
+                #{costPrice},
+                #{stock},
+                #{lockStock},
+                cast(#{skuAttrs} as json),
+                #{status},
+                #{saleCount})
+    </insert>
+
+    <update id="updateSku">
+        update sku
+        <set>
+            <if test="price != null">price = #{price},</if>
+            <if test="marketPrice != null">market_price = #{marketPrice},</if>
+            <if test="costPrice != null">cost_price = #{costPrice},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="lockStock != null">lock_stock = #{lockStock},</if>
+            <if test="skuAttrs != null">sku_attrs = cast(#{skuAttrs} as json),</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="saleCount != null">sale_count = #{saleCount},</if>
+            updated_at = current_timestamp
+        </set>
+        where sku_id = #{skuId}
+          and goods_id = #{goodsId}
+    </update>
+
+    <update id="deductSkuStock">
+        update sku
+        set stock = stock - #{quantity},
+            updated_at = current_timestamp
+        where sku_id = #{skuId}
+          and status = 1
+          and stock <![CDATA[>=]]> #{quantity}
+    </update>
+
+    <update id="addSkuStock">
+        update sku
+        set stock = stock + #{quantity},
+            updated_at = current_timestamp
+        where sku_id = #{skuId}
+          and status = 1
+    </update>
+
+    <delete id="deleteSkusByGoodsId">
+        delete from sku where goods_id = #{goodsId}
+    </delete>
+
+    <delete id="deleteSkusByGoodsIdAndNotIn">
+        delete from sku
+        where goods_id = #{goodsId}
+          and sku_id not in
+        <foreach collection="skuIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectSkuBySkuId" resultType="com.mdservice.entity.Sku">
+        select sku_id,
+               goods_id,
+               price,
+               market_price,
+               cost_price,
+               stock,
+               lock_stock,
+               sku_attrs,
+               status,
+               sale_count,
+               created_at,
+               updated_at
+        from sku
+        where sku_id = #{skuId}
+        limit 1
     </select>
 
 </mapper>

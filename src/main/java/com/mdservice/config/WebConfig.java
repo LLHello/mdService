@@ -35,8 +35,10 @@ public class WebConfig implements WebMvcConfigurer{
                 .excludePathPatterns("/goods/top15")
                 .excludePathPatterns("/goods/categoryList/**")
                 .excludePathPatterns("/goods/categoryId/**")
-                .excludePathPatterns("/upload/**");
-        ;
+                .excludePathPatterns("/goods/search/**")
+                .excludePathPatterns("/upload/**")
+                .excludePathPatterns("/comment/list/**")
+                .excludePathPatterns("/comment/stat/**");
     }
 
     //资源访问配置

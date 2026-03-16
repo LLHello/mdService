@@ -4,7 +4,9 @@ import com.mdservice.aop.Log;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.spring.AiService;
+import org.springframework.context.annotation.Profile;
 
+@Profile("!test")
 @AiService
 public interface CustomerServiceAgent {
     /**

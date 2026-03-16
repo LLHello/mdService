@@ -1,11 +1,14 @@
 package com.mdservice.service.impl;
 
 import com.mdservice.constant.RedisConstant;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.mdservice.domain.dto.GoodsDTO;
 import com.mdservice.domain.vo.GoodsVO;
 import com.mdservice.entity.Category;
 import com.mdservice.entity.Goods;
 import com.mdservice.entity.GoodsImage;
+import com.mdservice.entity.Sku;
 import com.mdservice.mapper.GoodsMapper;
 import com.mdservice.service.KnowledgeBaseService;
 import com.mdservice.service.inter.GoodsService;
@@ -26,9 +29,12 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -76,6 +82,10 @@ public class GoodsServiceImpl implements GoodsService {
         log.info("goods: {}, deleteImagePaths: {}, newImages: {}", goods, deleteImagePaths, newImages);
         log.info("oldImagePath: {}", oldImagePath);
         // 1. 更新商品基本信息
+        BigDecimal minSkuPrice = computeMinSkuPrice(goods.getSkus());
+        if (minSkuPrice != null) {
+            goods.setPrice(minSkuPrice.toPlainString());
+        }
         goods.setUpdateTime(LocalDateTime.now());
         boolean updateGoodsFlag = goodsMapper.update(goods);
         if (!updateGoodsFlag) {
@@ -131,6 +141,7 @@ public class GoodsServiceImpl implements GoodsService {
         String picStr = sb.toString();
         log.info("id: {}, picStr: {}", goodsId, picStr);
         goodsMapper.updatePicStr(goodsId, picStr);
+        syncSkus(goodsId, goods.getSkus());
         return Result.success();
     }
 
@@ -165,13 +176,18 @@ public class GoodsServiceImpl implements GoodsService {
         }
 
         Goods good = goodsMapper.getGood(goodsId);
+        if (good == null) {
+            return Result.error("商品不存在");
+        }
+        List<Sku> skus = goodsMapper.selectSkusByGoodsId(goodsId);
+        good.setSkus(skus);
         log.info("good: {}", good);
         return Result.success(good);
     }
     //top15商品
     @Override
     public Result getTop10() {
-        Set<String> top10 = redisTemplate.opsForZSet().reverseRange(RedisConstant.RANK_KEY, 0, 9);
+        Set<String> top10 = redisTemplate.opsForZSet().reverseRange(RedisConstant.RANK_KEY, 0, 10);
         List<GoodsVO> Top10Goods = goodsMapper.getGoods(top10);
         return Result.success(Top10Goods);
     }
@@ -200,6 +216,11 @@ public class GoodsServiceImpl implements GoodsService {
             }
         }
         String picStr = sb.toString();
+        List<Sku> skus = normalizeSkus(goodsDTO);
+        BigDecimal minSkuPrice = computeMinSkuPrice(skus);
+        if (minSkuPrice != null) {
+            goodsDTO.setPrice(minSkuPrice.toPlainString());
+        }
         //拷贝，然后更新数据库
         Goods goods = new Goods();
         BeanUtils.copyProperties(goodsDTO, goods);
@@ -212,6 +233,7 @@ public class GoodsServiceImpl implements GoodsService {
             return Result.error("添加商品失败！");
         }
         log.info("商品主键：{}", goods.getId());
+        syncSkus(goods.getId(), skus);
         String s = goods.getId() + "," + goods.getTitle()+ "," + goods.getPrice() + "," + goods.getDes();
         knowledgeBaseService.importKnowledge(s);
         return Result.success();
@@ -235,6 +257,77 @@ public class GoodsServiceImpl implements GoodsService {
     @Override
     public List<Goods> findByName(String name) {
         return goodsMapper.findByName(name);
+    }
+
+    @Override
+    public Result searchGoods(String keyword, BigDecimal minPrice, BigDecimal maxPrice, List<String> skuAttrs, Integer pageNum, Integer pageSize, String sort) {
+        Integer finalPageNum = pageNum == null || pageNum < 1 ? 1 : pageNum;
+        Integer finalPageSize = pageSize == null || pageSize < 1 ? 10 : pageSize;
+        PageHelper.startPage(finalPageNum, finalPageSize);
+        List<Goods> goodsList = goodsMapper.searchGoods(keyword, minPrice, maxPrice, skuAttrs, sort);
+        return Result.success(PageInfo.of(goodsList));
+    }
+
+    private void syncSkus(Long goodsId, List<Sku> skus) {
+        if (skus == null) {
+            return;
+        }
+        for (Sku sku : skus) {
+            if (sku == null) {
+                continue;
+            }
+            sku.setGoodsId(goodsId);
+            if (sku.getSkuId() == null) {
+                goodsMapper.insertSku(sku);
+            } else {
+                goodsMapper.updateSku(sku);
+            }
+        }
+        List<Long> skuIds = skus.stream()
+                .filter(Objects::nonNull)
+                .map(Sku::getSkuId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (skuIds.isEmpty()) {
+            goodsMapper.deleteSkusByGoodsId(goodsId);
+        } else {
+            goodsMapper.deleteSkusByGoodsIdAndNotIn(goodsId, skuIds);
+        }
+    }
+
+    private List<Sku> normalizeSkus(GoodsDTO goodsDTO) {
+        if (goodsDTO.getSkus() != null && !goodsDTO.getSkus().isEmpty()) {
+            return goodsDTO.getSkus();
+        }
+        if (ObjectUtils.isEmpty(goodsDTO.getPrice())) {
+            return Collections.emptyList();
+        }
+        Sku sku = new Sku();
+        sku.setPrice(new BigDecimal(goodsDTO.getPrice()));
+        sku.setMarketPrice(BigDecimal.ZERO);
+        sku.setCostPrice(BigDecimal.ZERO);
+        sku.setStock(0);
+        sku.setLockStock(0);
+        sku.setStatus((byte) 1);
+        sku.setSaleCount(0);
+        sku.setSkuAttrs("[]");
+        return Collections.singletonList(sku);
+    }
+
+    private BigDecimal computeMinSkuPrice(List<Sku> skus) {
+        if (skus == null || skus.isEmpty()) {
+            return null;
+        }
+        BigDecimal min = null;
+        for (Sku sku : skus) {
+            if (sku == null || sku.getPrice() == null) {
+                continue;
+            }
+            if (min == null || sku.getPrice().compareTo(min) < 0) {
+                min = sku.getPrice();
+            }
+        }
+        return min;
     }
 
 }

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.GoodsCommentMapper">
+
+    <resultMap id="commentMap" type="com.mdservice.entity.GoodsComment">
+        <id     column="id"               property="id"/>
+        <result column="goods_id"          property="goodsId"/>
+        <result column="user_id"           property="userId"/>
+        <result column="parent_id"         property="parentId"/>
+        <result column="reply_to_user_id"  property="replyToUserId"/>
+        <result column="content"           property="content"/>
+        <result column="rating"            property="rating"/>
+        <result column="status"            property="status"/>
+        <result column="create_time"       property="createTime"/>
+        <result column="username"          property="username"/>
+        <result column="user_icon"         property="userIcon"/>
+        <result column="reply_to_username" property="replyToUsername"/>
+    </resultMap>
+
+    <!-- 插入评论 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO goods_comment (goods_id, user_id, parent_id, reply_to_user_id, content, rating, status, create_time)
+        VALUES (#{goodsId}, #{userId}, #{parentId}, #{replyToUserId}, #{content}, #{rating}, 0, NOW())
+    </insert>
+
+    <!-- 查询商品一级评论（含评论人信息） -->
+    <select id="selectTopLevelByGoodsId" resultMap="commentMap">
+        SELECT
+            c.id, c.goods_id, c.user_id, c.parent_id, c.reply_to_user_id,
+            c.content, c.rating, c.status, c.create_time,
+            u.username, u.icon AS user_icon
+        FROM goods_comment c
+        LEFT JOIN `user` u ON c.user_id = u.id
+        WHERE c.goods_id = #{goodsId}
+          AND c.parent_id IS NULL
+          AND c.status = 0
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 查询二级评论（含评论人、被回复人信息） -->
+    <select id="selectRepliesByParentId" resultMap="commentMap">
+        SELECT
+            c.id, c.goods_id, c.user_id, c.parent_id, c.reply_to_user_id,
+            c.content, c.rating, c.status, c.create_time,
+            u.username, u.icon AS user_icon,
+            ru.username AS reply_to_username
+        FROM goods_comment c
+        LEFT JOIN `user` u  ON c.user_id = u.id
+        LEFT JOIN `user` ru ON c.reply_to_user_id = ru.id
+        WHERE c.parent_id = #{parentId}
+          AND c.status = 0
+        ORDER BY c.create_time ASC
+    </select>
+
+    <!-- 商家查看（包含被屏蔽的） -->
+    <select id="selectByGoodsIdForMerchant" resultMap="commentMap">
+        SELECT
+            c.id, c.goods_id, c.user_id, c.parent_id, c.reply_to_user_id,
+            c.content, c.rating, c.status, c.create_time,
+            u.username, u.icon AS user_icon,
+            ru.username AS reply_to_username
+        FROM goods_comment c
+        LEFT JOIN `user` u  ON c.user_id = u.id
+        LEFT JOIN `user` ru ON c.reply_to_user_id = ru.id
+        WHERE c.goods_id = #{goodsId}
+          AND c.parent_id IS NULL
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 查询单条 -->
+    <select id="selectById" resultMap="commentMap">
+        SELECT
+            c.id, c.goods_id, c.user_id, c.parent_id, c.reply_to_user_id,
+            c.content, c.rating, c.status, c.create_time,
+            u.username, u.icon AS user_icon
+        FROM goods_comment c
+        LEFT JOIN `user` u ON c.user_id = u.id
+        WHERE c.id = #{id}
+    </select>
+
+    <!-- 统计数量 -->
+    <select id="countByGoodsId" resultType="int">
+        SELECT COUNT(*) FROM goods_comment
+        WHERE goods_id = #{goodsId} AND parent_id IS NULL AND status = 0
+    </select>
+
+    <!-- 平均评分 -->
+    <select id="avgRatingByGoodsId" resultType="java.lang.Double">
+        SELECT AVG(rating) FROM goods_comment
+        WHERE goods_id = #{goodsId} AND parent_id IS NULL AND status = 0 AND rating IS NOT NULL
+    </select>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE goods_comment SET status = #{status} WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.OrderMapper">
+
+    <insert id="insertOrder" useGeneratedKeys="true" keyProperty="id">
+        insert into orders(order_no, user_id, status, total_amount, pay_amount, discount_amount, coupon_claim_id, create_time, pay_time)
+        values (#{orderNo}, #{userId}, #{status}, #{totalAmount}, #{payAmount}, #{discountAmount}, #{couponClaimId}, #{createTime}, #{payTime})
+    </insert>
+
+    <insert id="insertOrderItem" useGeneratedKeys="true" keyProperty="id">
+        insert into order_item(order_id, goods_id, sku_id, title, pic, price, quantity, total_amount, create_time)
+        values (#{orderId}, #{goodsId}, #{skuId}, #{title}, #{pic}, #{price}, #{quantity}, #{totalAmount}, #{createTime})
+    </insert>
+
+    <select id="selectOrderById" resultType="com.mdservice.entity.Orders">
+        select id,
+               order_no,
+               user_id,
+               status,
+               total_amount,
+               pay_amount,
+               coupon_claim_id,
+               discount_amount,
+               create_time,
+               pay_time,
+               update_time
+        from orders
+        where id = #{id}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectItemsByOrderId" resultType="com.mdservice.entity.OrderItem">
+        select id,
+               order_id,
+               goods_id,
+               sku_id,
+               title,
+               pic,
+               price,
+               quantity,
+               total_amount,
+               create_time
+        from order_item
+        where order_id = #{orderId}
+        order by id asc
+    </select>
+
+    <select id="selectOrdersByUserId" resultType="com.mdservice.entity.Orders">
+        select id,
+               order_no,
+               user_id,
+               status,
+               total_amount,
+               pay_amount,
+               coupon_claim_id,
+               discount_amount,
+               create_time,
+               pay_time,
+               update_time
+        from orders
+        where user_id = #{userId}
+        <if test="status != null">
+            and status = #{status}
+        </if>
+        order by id desc
+    </select>
+
+    <update id="markPaid">
+        update orders
+        set status      = 1,
+            pay_time    = current_timestamp,
+            update_time = current_timestamp
+        where id = #{id}
+          and user_id = #{userId}
+          and status = 0
+    </update>
+
+    <update id="markRefunded">
+        update orders
+        set status      = 2,
+            update_time = current_timestamp
+        where id = #{id}
+          and user_id = #{userId}
+          and status = 1
+    </update>
+
+    <update id="updateCouponInfo">
+        update orders
+        set coupon_claim_id = #{couponClaimId},
+            discount_amount = #{discountAmount},
+            pay_amount      = #{payAmount},
+            update_time     = current_timestamp
+        where id = #{id}
+    </update>
+
+    <update id="markCanceled">
+        update orders
+        set status      = 3,
+            update_time = current_timestamp
+        where id = #{id}
+          and user_id = #{userId}
+          and status = 0
+    </update>
+
+    <select id="selectMerchantPayAmountByOrderId" resultType="com.mdservice.domain.vo.MerchantPayAmountVO">
+        select g.merchant_id as merchantId,
+               sum(oi.total_amount) as amount
+        from order_item oi
+                 inner join goods g on g.id = oi.goods_id
+        where oi.order_id = #{orderId}
+        group by g.merchant_id
+    </select>
+
+    <select id="selectOrderItemsByUserAndMerchant" resultType="com.mdservice.domain.vo.ChatMerchantOrderItemVO">
+        select o.id           as orderId,
+               o.order_no     as orderNo,
+               o.status       as orderStatus,
+               o.create_time  as orderCreateTime,
+               o.pay_time     as payTime,
+               oi.goods_id    as goodsId,
+               oi.sku_id      as skuId,
+               oi.title       as title,
+               oi.pic         as pic,
+               oi.price       as price,
+               oi.quantity    as quantity,
+               oi.total_amount as totalAmount
+        from orders o
+                 inner join order_item oi on oi.order_id = o.id
+                 inner join goods g on g.id = oi.goods_id
+        where o.user_id = #{userId}
+          and g.merchant_id = #{merchantId}
+        order by o.id desc, oi.id asc
+    </select>
+
+</mapper>

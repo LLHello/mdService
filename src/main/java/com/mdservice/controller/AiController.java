@@ -4,6 +4,7 @@ import com.mdservice.service.KnowledgeBaseService;
 import com.mdservice.service.inter.CustomerServiceAgent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/chat")
 @Slf4j
+@Profile("!test")
 
 public class AiController {
     @Autowired

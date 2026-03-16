@@ -1,8 +1,7 @@
-package com.mdservice.ai;
+package com.mdservice.aitools;
 
 import com.mdservice.entity.Goods;
 import com.mdservice.mapper.GoodsMapper;
-import com.mdservice.utils.Result;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

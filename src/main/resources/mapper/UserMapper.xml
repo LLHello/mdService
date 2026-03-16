@@ -6,8 +6,8 @@
 <mapper namespace="com.mdservice.mapper.UserMapper">
 <!--    注册账户-->
     <insert id="registerAccount">
-        insert into user (account, password, gender, username, role, is_show, create_time,des)
-        value (#{account}, #{password}, #{gender}, #{username}, #{role}, #{isShow}, #{createTime},#{des})
+        insert into user (account, password, gender, username, role, is_show, money, create_time, des)
+        value (#{account}, #{password}, #{gender}, #{username}, #{role}, #{isShow}, #{money}, #{createTime}, #{des})
     </insert>
 <!--    更新用户头像-->
     <update id="updateIcon">
@@ -43,10 +43,23 @@
     </select>
 <!--    根据账号查询用户-->
     <select id="queryUser" resultType="com.mdservice.entity.User">
-        select id, account, gender, role, username, password,is_show,create_time,update_time,icon,des
+        select id, account, gender, role, username, password, is_show, money, create_time, update_time, icon, des
         from user
         where account = #{account}
     </select>
+
+    <update id="deductMoney">
+        update user
+        set money = money - #{amount}
+        where id = #{userId}
+          and money <![CDATA[>=]]> #{amount}
+    </update>
+
+    <update id="addMoney">
+        update user
+        set money = money + #{amount}
+        where id = #{userId}
+    </update>
     <select id="queryId" resultType="com.mdservice.entity.User">
         select * from user
         where id = #{id}

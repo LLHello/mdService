@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.BannerMapper">
+
+    <resultMap id="BannerVOMap" type="com.mdservice.domain.vo.BannerVO">
+        <id     column="id"        property="id" />
+        <result column="goods_id"  property="goodsId" />
+        <result column="title"     property="title" />
+        <result column="pic"       property="pic" />
+        <result column="sort"      property="sort" />
+        <result column="is_active" property="isActive" />
+    </resultMap>
+
+    <select id="selectActiveBanners" resultMap="BannerVOMap">
+        SELECT b.id,
+               b.goods_id,
+               g.title,
+               g.pic,
+               b.sort,
+               b.is_active
+        FROM banner b
+                 INNER JOIN goods g ON g.id = b.goods_id
+        WHERE b.is_active = 1
+          AND g.status = 1
+          AND g.is_show = 1
+        ORDER BY b.sort ASC, b.id ASC
+        LIMIT 3
+    </select>
+
+    <select id="selectAllBanners" resultMap="BannerVOMap">
+        SELECT b.id,
+               b.goods_id,
+               g.title,
+               g.pic,
+               b.sort,
+               b.is_active
+        FROM banner b
+                 INNER JOIN goods g ON g.id = b.goods_id
+        ORDER BY b.sort ASC, b.id ASC
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(1) FROM banner
+    </select>
+
+    <select id="countByGoodsId" resultType="int">
+        SELECT COUNT(1) FROM banner WHERE goods_id = #{goodsId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO banner(goods_id, sort, is_active)
+        VALUES (#{goodsId}, #{sort}, #{isActive})
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM banner WHERE id = #{id}
+    </delete>
+
+    <update id="updateSort">
+        UPDATE banner SET sort = #{sort}, update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+</mapper>

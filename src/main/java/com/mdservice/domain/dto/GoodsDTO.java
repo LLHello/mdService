@@ -3,6 +3,7 @@ package com.mdservice.domain.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.mdservice.entity.Sku;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -22,4 +23,5 @@ public class GoodsDTO {
     private LocalDateTime updateTime;
     private Byte status;//管理员管理商品
     private String des;//对商品的描述
+    private List<Sku> skus;
 }

@@ -5,10 +5,12 @@ import com.mdservice.domain.vo.GoodsVO;
 import com.mdservice.entity.Category;
 import com.mdservice.entity.Goods;
 import com.mdservice.entity.GoodsImage;
+import com.mdservice.entity.Sku;
 import com.mdservice.utils.Result;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,4 +43,26 @@ public interface GoodsMapper {
     List<Goods> findByName(String name);
 
     List<Goods> getAllGoods();
+
+    List<Goods> searchGoods(@Param("keyword") String keyword,
+                            @Param("minPrice") BigDecimal minPrice,
+                            @Param("maxPrice") BigDecimal maxPrice,
+                            @Param("skuAttrs") List<String> skuAttrs,
+                            @Param("sort") String sort);
+
+    List<Sku> selectSkusByGoodsId(Long goodsId);
+
+    int insertSku(Sku sku);
+
+    int updateSku(Sku sku);
+
+    int deductSkuStock(@Param("skuId") Long skuId, @Param("quantity") Integer quantity);
+
+    int addSkuStock(@Param("skuId") Long skuId, @Param("quantity") Integer quantity);
+
+    int deleteSkusByGoodsId(Long goodsId);
+
+    int deleteSkusByGoodsIdAndNotIn(@Param("goodsId") Long goodsId, @Param("skuIds") List<Long> skuIds);
+
+    Sku selectSkuBySkuId(@Param("skuId") Long skuId);
 }

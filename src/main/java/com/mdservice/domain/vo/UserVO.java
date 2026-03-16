@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
@@ -15,6 +16,7 @@ public class UserVO {
     private String username;
     private Byte role;//0,普通用户；1，商家；2，管理员
     private Byte isShow;
+    private BigDecimal money;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private String icon;

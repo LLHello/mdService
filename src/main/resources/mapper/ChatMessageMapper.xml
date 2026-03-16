@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.ChatMessageMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into chat_message(conversation_id, sender_id, receiver_id, msg_type, content, order_id, goods_id, client_msg_id, status, create_time)
+        values (#{conversationId}, #{senderId}, #{receiverId}, #{msgType}, #{content}, #{orderId}, #{goodsId}, #{clientMsgId}, #{status}, now())
+    </insert>
+
+    <select id="selectUndeliveredByReceiver" resultType="com.mdservice.entity.ChatMessage">
+        select id,
+               conversation_id,
+               sender_id,
+               receiver_id,
+               msg_type,
+               content,
+               order_id,
+               goods_id,
+               client_msg_id,
+               status,
+               create_time,
+               deliver_time,
+               read_time
+        from chat_message
+        where receiver_id = #{receiverId}
+          and status = 0
+        order by id asc
+        limit #{limit}
+    </select>
+
+    <update id="markDelivered">
+        update chat_message
+        set status       = 1,
+            deliver_time = now()
+        where id = #{id}
+          and status = 0
+    </update>
+
+    <update id="markReadUpTo">
+        update chat_message
+        set status    = 2,
+            read_time = now()
+        where conversation_id = #{conversationId}
+          and receiver_id = #{receiverId}
+          and id &lt;= #{lastReadMessageId}
+          and status &lt; 2
+    </update>
+
+    <select id="selectHistory" resultType="com.mdservice.entity.ChatMessage">
+        select id,
+               conversation_id,
+               sender_id,
+               receiver_id,
+               msg_type,
+               content,
+               order_id,
+               goods_id,
+               client_msg_id,
+               status,
+               create_time,
+               deliver_time,
+               read_time
+        from chat_message
+        where conversation_id = #{conversationId}
+        <if test="beforeId != null">
+            and id &lt; #{beforeId}
+        </if>
+        <if test="daysAgo != null">
+            and create_time &gt;= date_sub(now(), interval #{daysAgo} day)
+        </if>
+        order by id desc
+        limit #{limit}
+    </select>
+
+</mapper>

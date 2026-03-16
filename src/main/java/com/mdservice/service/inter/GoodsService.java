@@ -5,6 +5,7 @@ import com.mdservice.entity.Goods;
 import com.mdservice.utils.Result;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface GoodsService {
@@ -29,4 +30,6 @@ public interface GoodsService {
 
     Result categoryIdAdmin(Long id);
     List<Goods> findByName(String name);
+
+    Result searchGoods(String keyword, BigDecimal minPrice, BigDecimal maxPrice, List<String> skuAttrs, Integer pageNum, Integer pageSize, String sort);
 }

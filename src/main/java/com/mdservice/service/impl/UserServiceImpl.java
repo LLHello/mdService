@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -47,6 +48,7 @@ public class UserServiceImpl implements UserService {
 
         //默认启用
         user.setIsShow((byte) 1);
+        user.setMoney(BigDecimal.ZERO);
         //创建时间
         user.setCreateTime(LocalDateTime.now());
         //创建账号

@@ -1,9 +1,16 @@
 package com.mdservice.websocket;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mdservice.domain.vo.ChatMerchantOrderItemVO;
+import com.mdservice.entity.ChatMessage;
 import com.mdservice.entity.OfflineMessage;
 import com.mdservice.entity.SystemNotice;
+import com.mdservice.mapper.OrderMapper;
 import com.mdservice.mapper.OfflineMessageMapper;
 import com.mdservice.mapper.SystemNoticeMapper;
+import com.mdservice.service.inter.ChatService;
+import com.mdservice.utils.JwtUtil;
 import com.mdservice.utils.SpringContextUtil;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
@@ -13,7 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,6 +47,9 @@ public class WebSocketServer {
     public void onOpen(Session session, @PathParam("userId") String userId) {
         this.session = session;
         this.userId = userId;
+        if (!checkUserIdToken(session, userId)) {
+            return;
+        }
         if (webSocketMap.containsKey(userId)) {
             webSocketMap.remove(userId);
             webSocketMap.put(userId, this);
@@ -54,6 +68,9 @@ public class WebSocketServer {
 
             // 2. 检查未读系统公告 (新增逻辑)
             checkAndSendSystemNotices();
+
+            // 3. 检查离线聊天消息
+            checkAndSendChatMessages();
         } catch (IOException e) {
             log.error("用户:" + userId + ",网络异常!!!!!!");
         }
@@ -118,6 +135,24 @@ public class WebSocketServer {
             }
         }
     }
+
+    private void checkAndSendChatMessages() {
+        ChatService chatService = SpringContextUtil.getBean(ChatService.class);
+        Long receiverId = Long.parseLong(this.userId);
+        List<ChatMessage> undelivered = chatService.listUndelivered(receiverId, 200);
+        if (undelivered == null || undelivered.isEmpty()) {
+            return;
+        }
+        for (ChatMessage msg : undelivered) {
+            try {
+                sendJson("chat.message", msg);
+                chatService.markDelivered(msg.getId());
+            } catch (IOException e) {
+                log.error("聊天离线消息推送失败: {}", e.getMessage());
+                return;
+            }
+        }
+    }
     /**
      * 连接关闭调用的方法
      */
@@ -138,6 +173,153 @@ public class WebSocketServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         log.info("用户消息:" + userId + ",报文:" + message);
+        ObjectMapper objectMapper = SpringContextUtil.getBean(ObjectMapper.class);
+        JsonNode root;
+        try {
+            root = objectMapper.readTree(message);
+        } catch (Exception e) {
+            return;
+        }
+
+        String type = root.path("type").asText(null);
+        if (type == null) {
+            return;
+        }
+        Long currentUserId;
+        try {
+            currentUserId = Long.parseLong(this.userId);
+        } catch (Exception e) {
+            return;
+        }
+
+        if ("chat.send".equals(type)) {
+            Long toUserId = readLong(root, "toUserId");
+            String content = root.path("content").asText(null);
+            Byte msgType = root.hasNonNull("msgType") ? (byte) root.path("msgType").asInt() : (byte) 0;
+            Long orderId = readLong(root, "orderId");
+            Long goodsId = readLong(root, "goodsId");
+            String clientMsgId = root.path("clientMsgId").asText(null);
+
+            if (toUserId == null || content == null) {
+                return;
+            }
+
+            ChatService chatService = SpringContextUtil.getBean(ChatService.class);
+            ChatMessage saved;
+            try {
+                saved = chatService.createMessage(currentUserId, toUserId, msgType, content, orderId, goodsId, clientMsgId);
+            } catch (Exception e) {
+                return;
+            }
+
+            try {
+                Map<String, Object> ack = new HashMap<>();
+                ack.put("clientMsgId", clientMsgId);
+                ack.put("messageId", saved.getId());
+                ack.put("conversationId", saved.getConversationId());
+                sendJson("chat.ack", ack);
+            } catch (IOException e) {
+                return;
+            }
+
+            WebSocketServer receiverServer = webSocketMap.get(String.valueOf(toUserId));
+            if (receiverServer != null) {
+                try {
+                    receiverServer.sendJson("chat.message", saved);
+                    chatService.markDelivered(saved.getId());
+                } catch (IOException e) {
+                    log.error("聊天消息实时推送失败: {}", e.getMessage());
+                }
+            }
+            return;
+        }
+
+        if ("chat.read".equals(type)) {
+            Long conversationId = readLong(root, "conversationId");
+            Long peerId = readLong(root, "peerId");
+            Long lastReadMessageId = readLong(root, "lastReadMessageId");
+            if (lastReadMessageId == null) {
+                return;
+            }
+            ChatService chatService = SpringContextUtil.getBean(ChatService.class);
+            if (conversationId == null) {
+                if (peerId == null) {
+                    return;
+                }
+                conversationId = chatService.getOrCreateConversation(currentUserId, peerId).getId();
+            }
+            chatService.markRead(conversationId, currentUserId, lastReadMessageId);
+            try {
+                Map<String, Object> ack = new HashMap<>();
+                ack.put("conversationId", conversationId);
+                ack.put("lastReadMessageId", lastReadMessageId);
+                sendJson("chat.read.ack", ack);
+            } catch (IOException e) {
+                return;
+            }
+            return;
+        }
+
+        if ("chat.history".equals(type)) {
+            Long conversationId = readLong(root, "conversationId");
+            Long peerId = readLong(root, "peerId");
+            Long beforeId = readLong(root, "beforeId");
+            Integer limit = root.hasNonNull("limit") ? root.path("limit").asInt() : 20;
+            Integer daysAgo = root.hasNonNull("daysAgo") ? root.path("daysAgo").asInt() : 15;
+
+            ChatService chatService = SpringContextUtil.getBean(ChatService.class);
+            if (conversationId == null) {
+                if (peerId == null) {
+                    return;
+                }
+                conversationId = chatService.getOrCreateConversation(currentUserId, peerId).getId();
+            }
+            List<ChatMessage> history = chatService.history(conversationId, beforeId, limit, daysAgo);
+            List<ChatMessage> result = history == null ? Collections.emptyList() : new ArrayList<>(history);
+            Collections.reverse(result);
+            try {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("conversationId", conversationId);
+                payload.put("messages", result);
+                sendJson("chat.history", payload);
+            } catch (IOException e) {
+                return;
+            }
+            return;
+        }
+
+        if ("chat.orderItems".equals(type)) {
+            Long userId = readLong(root, "userId");
+            Long merchantId = readLong(root, "merchantId");
+            Long peerId = readLong(root, "peerId");
+            if (userId == null && merchantId == null) {
+                return;
+            }
+            if (userId == null) {
+                userId = currentUserId;
+            }
+            if (merchantId == null && peerId != null) {
+                merchantId = peerId;
+            }
+            if (merchantId == null) {
+                return;
+            }
+            if (!currentUserId.equals(userId) && !currentUserId.equals(merchantId)) {
+                return;
+            }
+            OrderMapper orderMapper = SpringContextUtil.getBean(OrderMapper.class);
+            List<ChatMerchantOrderItemVO> items = orderMapper.selectOrderItemsByUserAndMerchant(userId, merchantId);
+            try {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("userId", userId);
+                payload.put("merchantId", merchantId);
+                payload.put("items", items);
+                sendJson("chat.orderItems", payload);
+            } catch (IOException e) {
+                return;
+            }
+            return;
+        }
     }
     /**
      * 发生错误时调用
@@ -151,7 +333,71 @@ public class WebSocketServer {
      * 实现服务器主动推送
      */
     public void sendMessage(String message) throws IOException {
-        this.session.getBasicRemote().sendText(message);
+        Session s = this.session;
+        if (s == null || !s.isOpen()) {
+            throw new IOException("WebSocket session has been closed");
+        }
+        synchronized (s) {
+            if (!s.isOpen()) {
+                throw new IOException("WebSocket session has been closed");
+            }
+            try {
+                s.getBasicRemote().sendText(message);
+            } catch (IllegalStateException e) {
+                throw new IOException(e.getMessage(), e);
+            }
+        }
+    }
+
+    private void sendJson(String type, Object data) throws IOException {
+        ObjectMapper objectMapper = SpringContextUtil.getBean(ObjectMapper.class);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", type);
+        payload.put("data", data);
+        sendMessage(objectMapper.writeValueAsString(payload));
+    }
+
+    private boolean checkUserIdToken(Session session, String pathUserId) {
+        try {
+            Map<String, List<String>> params = session.getRequestParameterMap();
+            List<String> tokens = params == null ? null : params.get("token");
+            if (tokens == null || tokens.isEmpty()) {
+                return true;
+            }
+            String token = tokens.get(0);
+            if (token == null || token.isEmpty()) {
+                return true;
+            }
+            JwtUtil jwtUtil = SpringContextUtil.getBean(JwtUtil.class);
+            String tokenUserId = String.valueOf(jwtUtil.parseToken(token).get("userId"));
+            if (!pathUserId.equals(tokenUserId)) {
+                session.close(new CloseReason(CloseReason.CloseCodes.VIOLATED_POLICY, "userId mismatch"));
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            try {
+                session.close(new CloseReason(CloseReason.CloseCodes.VIOLATED_POLICY, "invalid token"));
+            } catch (Exception ignored) {
+            }
+            return false;
+        }
+    }
+
+    private Long readLong(JsonNode root, String field) {
+        if (root == null || field == null) {
+            return null;
+        }
+        JsonNode node = root.get(field);
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        try {
+            long v = node.asLong();
+            return v == 0 ? null : v;
+        } catch (Exception e) {
+            return null;
+        }
     }
     /**
      * 发送自定义消息 (群发或点对点)

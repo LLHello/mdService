@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.ChatConversationUserMapper">
+
+    <select id="selectByConversationAndUser" resultType="com.mdservice.entity.ChatConversationUser">
+        select id,
+               conversation_id,
+               user_id,
+               peer_id,
+               unread_count,
+               last_read_message_id,
+               last_read_time,
+               create_time,
+               update_time
+        from chat_conversation_user
+        where conversation_id = #{conversationId}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into chat_conversation_user(conversation_id, user_id, peer_id, unread_count, last_read_message_id, last_read_time, create_time, update_time)
+        values (#{conversationId}, #{userId}, #{peerId}, #{unreadCount}, #{lastReadMessageId}, #{lastReadTime}, now(), now())
+    </insert>
+
+    <update id="incrementUnread">
+        update chat_conversation_user
+        set unread_count = unread_count + #{delta},
+            update_time  = now()
+        where conversation_id = #{conversationId}
+          and user_id = #{userId}
+    </update>
+
+    <update id="resetUnread">
+        update chat_conversation_user
+        set unread_count         = 0,
+            last_read_message_id = #{lastReadMessageId},
+            last_read_time       = now(),
+            update_time          = now()
+        where conversation_id = #{conversationId}
+          and user_id = #{userId}
+    </update>
+
+    <select id="listByUserId" resultType="com.mdservice.entity.ChatConversationUser">
+        select id,
+               conversation_id,
+               user_id,
+               peer_id,
+               unread_count,
+               last_read_message_id,
+               last_read_time,
+               create_time,
+               update_time
+        from chat_conversation_user
+        where user_id = #{userId}
+        order by update_time desc
+    </select>
+
+    <select id="listConversationVOByUserId" resultType="com.mdservice.domain.vo.ChatConversationVO">
+        select ccu.conversation_id   as conversationId,
+               ccu.peer_id          as peerId,
+               u.username           as peerName,
+               u.icon               as peerIcon,
+               ccu.unread_count     as unreadCount,
+               c.last_message_id    as lastMessageId,
+               lm.content           as lastMessageContent,
+               c.last_message_time  as lastMessageTime
+        from chat_conversation_user ccu
+                 join chat_conversation c
+                      on c.id = ccu.conversation_id
+                 left join chat_message lm
+                           on lm.id = c.last_message_id
+                 left join user u
+                           on u.id = ccu.peer_id
+        where ccu.user_id = #{userId}
+        order by c.last_message_time desc, ccu.update_time desc
+    </select>
+
+</mapper>

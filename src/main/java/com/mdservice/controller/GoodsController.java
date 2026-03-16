@@ -12,6 +12,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -36,6 +38,16 @@ public class GoodsController {
     @GetMapping("/merchantGoods/{id}")
     public Result merchantGoods(@PathVariable Long id){
         return goodsService.getMerchantGoods(id);
+    }
+    @GetMapping("/search")
+    public Result searchGoods(@RequestParam(required = false) String keyword,
+                              @RequestParam(required = false) BigDecimal minPrice,
+                              @RequestParam(required = false) BigDecimal maxPrice,
+                              @RequestParam(required = false) List<String> skuAttrs,
+                              @RequestParam(defaultValue = "1") Integer pageNum,
+                              @RequestParam(defaultValue = "10") Integer pageSize,
+                              @RequestParam(required = false) String sort) {
+        return goodsService.searchGoods(keyword, minPrice, maxPrice, skuAttrs, pageNum, pageSize, sort);
     }
     //更新商品信息（商家）
     @Log(module = "商品", operation = "修改商品", desc = "商家修改商品信息")

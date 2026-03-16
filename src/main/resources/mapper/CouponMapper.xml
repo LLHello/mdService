@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.CouponMapper">
+
+    <insert id="insertCoupon" useGeneratedKeys="true" keyProperty="id">
+        insert into coupon(name, goods_id, discount_amount, threshold_amount, total_stock, available_stock, status, start_time, end_time)
+        values (#{name}, #{goodsId}, #{discountAmount}, #{thresholdAmount}, #{totalStock}, #{availableStock}, #{status}, #{startTime}, #{endTime})
+    </insert>
+
+    <update id="updateAvailableStock">
+        update coupon
+        set available_stock = available_stock + #{delta},
+            update_time = current_timestamp
+        where id = #{id}
+    </update>
+
+    <select id="selectById" resultType="com.mdservice.entity.Coupon">
+        select id,
+               name,
+               goods_id,
+               discount_amount,
+               threshold_amount,
+               total_stock,
+               available_stock,
+               status,
+               start_time,
+               end_time,
+               create_time,
+               update_time
+        from coupon
+        where id = #{id}
+        limit 1
+    </select>
+
+    <select id="selectAll" resultType="com.mdservice.entity.Coupon">
+        select id,
+               name,
+               goods_id,
+               discount_amount,
+               threshold_amount,
+               total_stock,
+               available_stock,
+               status,
+               start_time,
+               end_time,
+               create_time,
+               update_time
+        from coupon
+        order by id desc
+    </select>
+
+    <insert id="insertClaim" useGeneratedKeys="true" keyProperty="id">
+        insert into coupon_claim(coupon_id, user_id, status)
+        values (#{couponId}, #{userId}, #{status})
+    </insert>
+
+    <select id="existsClaim" resultType="int">
+        select count(1)
+        from coupon_claim
+        where coupon_id = #{couponId}
+          and user_id = #{userId}
+    </select>
+
+    <select id="selectClaimUserIds" resultType="long">
+        select user_id
+        from coupon_claim
+        where coupon_id = #{couponId}
+        order by id asc
+    </select>
+
+    <select id="selectAllIds" resultType="long">
+        select id from coupon order by id asc
+    </select>
+
+    <!-- 按商品ID查询可用优惠券（全场券 goods_id IS NULL 也包含）-->
+    <select id="selectByGoodsId" resultType="com.mdservice.entity.Coupon">
+        select id, name, goods_id, discount_amount, threshold_amount,
+               total_stock, available_stock, status, start_time, end_time,
+               create_time, update_time
+        from coupon
+        where status = 1
+          and (goods_id = #{goodsId} or goods_id is null)
+          and (end_time is null or end_time &gt; now())
+        order by id desc
+    </select>
+
+    <!-- 用户已领取且未使用的优惠券 -->
+    <select id="selectUnusedClaimsByUserId" resultType="com.mdservice.domain.vo.MyCouponVO">
+        select cc.id        as claimId,
+               c.id         as id,
+               c.name,
+               c.goods_id,
+               c.discount_amount,
+               c.threshold_amount,
+               c.total_stock,
+               c.available_stock,
+               c.status,
+               c.start_time,
+               c.end_time,
+               c.create_time,
+               c.update_time
+        from coupon_claim cc
+             inner join coupon c on c.id = cc.coupon_id
+        where cc.user_id = #{userId}
+          and cc.status = 0
+          and cc.used_order_id is null
+          and c.status = 1
+          and (c.end_time is null or c.end_time &gt; now())
+        order by cc.id desc
+    </select>
+
+    <select id="selectClaimById" resultType="com.mdservice.entity.CouponClaim">
+        select id, coupon_id, user_id, status, used_order_id, create_time
+        from coupon_claim
+        where id = #{claimId}
+        limit 1
+    </select>
+
+    <update id="markClaimUsed">
+        update coupon_claim
+        set status        = 1,
+            used_order_id = #{orderId}
+        where id = #{claimId}
+          and status = 0
+          and used_order_id is null
+    </update>
+
+    <update id="markClaimUnused">
+        update coupon_claim
+        set status        = 0,
+            used_order_id = null
+        where id = #{claimId}
+          and status = 1
+    </update>
+
+</mapper>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mdservice.mapper.CartMapper">
+
+    <select id="selectByUserIdAndSkuId" resultType="com.mdservice.entity.CartItem">
+        select id,
+               user_id,
+               goods_id,
+               sku_id,
+               quantity,
+               checked,
+               create_time,
+               update_time
+        from cart_item
+        where user_id = #{userId}
+          and sku_id = #{skuId}
+        limit 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into cart_item(user_id, goods_id, sku_id, quantity, checked)
+        values (#{userId}, #{goodsId}, #{skuId}, #{quantity}, #{checked})
+    </insert>
+
+    <update id="updateQuantity">
+        update cart_item
+        set quantity = #{quantity},
+            update_time = current_timestamp
+        where id = #{id}
+          and user_id = #{userId}
+    </update>
+
+    <update id="updateChecked">
+        update cart_item
+        set checked = #{checked},
+            update_time = current_timestamp
+        where id = #{id}
+          and user_id = #{userId}
+    </update>
+
+    <delete id="deleteById">
+        delete from cart_item
+        where id = #{id}
+          and user_id = #{userId}
+    </delete>
+
+    <select id="selectCartByUserId" resultType="com.mdservice.domain.vo.CartItemVO">
+        select ci.id,
+               ci.goods_id,
+               ci.sku_id,
+               ci.quantity,
+               ci.checked,
+               g.title,
+               g.pic,
+               s.price,
+               s.stock,
+               s.sku_attrs,
+               ci.create_time,
+               ci.update_time
+        from cart_item ci
+                 join goods g on g.id = ci.goods_id
+                 join sku s on s.sku_id = ci.sku_id
+        where ci.user_id = #{userId}
+        order by ci.id desc
+    </select>
+
+    <select id="selectCheckedCartByUserId" resultType="com.mdservice.domain.vo.CartItemVO">
+        select ci.id,
+               ci.goods_id,
+               ci.sku_id,
+               ci.quantity,
+               ci.checked,
+               g.title,
+               g.pic,
+               s.price,
+               s.stock,
+               s.sku_attrs,
+               ci.create_time,
+               ci.update_time
+        from cart_item ci
+                 join goods g on g.id = ci.goods_id
+                 join sku s on s.sku_id = ci.sku_id
+        where ci.user_id = #{userId}
+          and ci.checked = 1
+        order by ci.id asc
+    </select>
+
+    <delete id="deleteCheckedByUserId">
+        delete from cart_item
+        where user_id = #{userId}
+          and checked = 1
+    </delete>
+
+</mapper>
+
